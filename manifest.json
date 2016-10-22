@@ -7,7 +7,7 @@
     "tabs"
   ],
   "browser_action": {
-    "default_popup": "typedUrls.html",
+    "default_popup": "colorFavion.html",
     "default_icon": "sushi2.png"
   },
   "chrome_url_overrides": {
