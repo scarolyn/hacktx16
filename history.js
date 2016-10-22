@@ -53,10 +53,12 @@ function buildTypedUrlList(divName) {
       // For each history item, get details on all visits.
       for (var i = 0; i < historyItems.length; ++i) {
         var url = historyItems[i].url;
+        console.log(url);
         var processVisitsWithUrl = function(url) {
           // We need the url of the visited item to process the visit.
           // Use a closure to bind the  url into the callback's args.
           return function(visitItems) {
+            //console.log(visitItems);
             processVisits(url, visitItems);
           };
         };
@@ -77,11 +79,6 @@ function buildTypedUrlList(divName) {
   // times a user visited a URL by typing the address.
   var processVisits = function(url, visitItems) {
     for (var i = 0, ie = visitItems.length; i < ie; ++i) {
-      // Ignore items unless the user typed the URL.
-      if (visitItems[i].transition != 'typed') {
-        continue;
-      }
-
       if (!urlToCount[url]) {
         urlToCount[url] = 0;
       }
