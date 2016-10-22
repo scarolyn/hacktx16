@@ -1,13 +1,13 @@
 {
-  "name": "Typed URL History",
-  "version": "1.2",
-  "description": "Reads your history, and shows the top ten pages you go to by typing the URL.",
+  "name": "SushiTab",
+  "version": "1.0",
+  "description": "Displays most visited pages on your 'New Tab' page",
   "permissions": [
     "history"
   ],
   "browser_action": {
     "default_popup": "typedUrls.html",
-    "default_icon": "clock.png"
+    "default_icon": "sushi.png"
   },
   "manifest_version": 2
 }
