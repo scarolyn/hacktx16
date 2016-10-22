@@ -20,24 +20,54 @@ var makeLegit = function(url) {
     return url;
 }
 
+function processData(data) {
+  var newDataSet = [];
+  for(var key in data) {
+  //  console.log(key + ", " + data[key]);
+    newDataSet.push({name: key, value: data[key]});
+  }
+  return {children: newDataSet};
+}
+
 // Given an array of URLs, build a DOM list of those URLs in the
 // browser action popup.
 function buildPopupDom(divName, data) {
-  var popupDiv = document.getElementById(divName);
+  var diameter = 900;
 
-  var ul = document.createElement('ul');
-  popupDiv.appendChild(ul);
+  var svg = d3.select('#svgVisualize').append('svg')
+    .style('width', window.innerWidth)
+    .style('height', window.innerHeight);
 
-  for (var i = 0, ie = data.length; i < ie; ++i) {
-    var a = document.createElement('a');
-    a.href = makeLegit(data[i]);
-    a.appendChild(document.createTextNode(data[i]));
+  var bubble = d3.layout.pack()
+    .size([diameter, diameter])
+    .padding(3) // padding between adjacent circles
+    .value(function(d) {return d.value;}); // new data will be loaded to bubble layout
 
-    var li = document.createElement('li');
-    li.appendChild(a);
+  var nodes = bubble.nodes(processData(data))
+    .filter(function(d) { console.log(!d.children); return !d.children; }); // filter out the outer bubble
 
-    ul.appendChild(li);
-  }
+  var vis = svg.selectAll('circle')
+    .data(nodes, function(d) { return d.name; });
+ 
+  vis.enter().append('circle')
+    .attr('transform', function(d) { return 'translate(' + d.x + ',' + d.y + ')'; })
+    .attr('r', function(d) { return d.r; })
+    .attr("stroke", "black")
+    .attr("fill", "white");
+
+  vis.append("text")
+    .attr({
+      "text-anchor": "middle",
+      "font-size": function(d) {
+        return d.r / ((d.r * 10) / 100);
+      },
+      "dy": function(d) {
+        return d.r / ((d.r * 25) / 100);
+      }
+    })
+    .attr("stroke", "black")
+    .attr("fill", "black")
+    .text(function(d){ return d.name; });
 }
 
 // Search history to find up to ten links that a user has typed in,
@@ -54,13 +84,14 @@ function buildTypedUrlList(divName) {
 
   chrome.history.search({
       'text': '',              // Return every history item....
-      'startTime': oneWeekAgo  // that was accessed less than one week ago.
+      'startTime': oneWeekAgo,
+      'maxResults': 10000  // that was accessed less than one week ago.
     },
     function(historyItems) {
       // For each history item, get details on all visits.
       for (var i = 0; i < historyItems.length; ++i) {
         var url = historyItems[i].url;
-        console.log(url);
+        //console.log(url);
         var processVisitsWithUrl = function(url) {
           // We need the url of the visited item to process the visit.
           // Use a closure to bind the  url into the callback's args.
@@ -113,22 +144,11 @@ var filterUrl = function(urlFilter) {
 
   // This function is called when we have the final list of URls to display.
   var onAllVisitsProcessed = function() {
-    // Get the top scorring urls.
-    urlArray = [];
-    for (var url in urlToCount) {
-      urlArray.push(url);
-    }
-
-    // Sort the URLs by the number of times the user typed them.
-    urlArray.sort(function(a, b) {
-      return urlToCount[b] - urlToCount[a];
-    });
-
-//    buildPopupDom(divName, urlArray.slice(0, 10));
-    buildPopupDom(divName, urlArray);
+    buildPopupDom(divName, urlToCount);
   };
 }
 
 document.addEventListener('DOMContentLoaded', function () {
-  buildTypedUrlList("typedUrl_div");
+  buildTypedUrlList("svgVisualize");  
 });
+
