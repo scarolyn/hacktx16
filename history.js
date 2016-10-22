@@ -12,6 +12,14 @@ function onAnchorClick(event) {
   return false;
 }
 
+var makeLegit = function(url) {
+    if (!url.startsWith("http")) {
+        url = "http://" + url;
+    }
+
+    return url;
+}
+
 // Given an array of URLs, build a DOM list of those URLs in the
 // browser action popup.
 function buildPopupDom(divName, data) {
@@ -22,9 +30,8 @@ function buildPopupDom(divName, data) {
 
   for (var i = 0, ie = data.length; i < ie; ++i) {
     var a = document.createElement('a');
-    a.href = data[i];
+    a.href = makeLegit(data[i]);
     a.appendChild(document.createTextNode(data[i]));
-    a.addEventListener('click', onAnchorClick);
 
     var li = document.createElement('li');
     li.appendChild(a);
@@ -70,6 +77,13 @@ function buildTypedUrlList(divName) {
       }
     });
 
+var filterUrl = function(urlFilter) {
+    if (typeof urlFilter !== 'undefined') {
+        var urlParts = urlFilter.split('/', 4);
+        return urlParts[2];
+    }
+};
+
 
   // Maps URLs to a count of the number of times the user typed that URL into
   // the omnibox.
@@ -79,11 +93,14 @@ function buildTypedUrlList(divName) {
   // times a user visited a URL by typing the address.
   var processVisits = function(url, visitItems) {
     for (var i = 0, ie = visitItems.length; i < ie; ++i) {
-      if (!urlToCount[url]) {
-        urlToCount[url] = 0;
-      }
+      url = filterUrl(url);
+      if (typeof url === 'string') {
+          if (!urlToCount[url]) {
+            urlToCount[url] = 0;
+          }
 
-      urlToCount[url]++;
+          urlToCount[url]++;
+      }
     }
 
     // If this is the final outstanding call to processVisits(),
@@ -107,7 +124,8 @@ function buildTypedUrlList(divName) {
       return urlToCount[b] - urlToCount[a];
     });
 
-    buildPopupDom(divName, urlArray.slice(0, 10));
+//    buildPopupDom(divName, urlArray.slice(0, 10));
+    buildPopupDom(divName, urlArray);
   };
 }
 
