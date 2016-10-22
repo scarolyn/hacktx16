@@ -23,21 +23,53 @@ var makeLegit = function(url) {
 // Given an array of URLs, build a DOM list of those URLs in the
 // browser action popup.
 function buildPopupDom(divName, data) {
-  var popupDiv = document.getElementById(divName);
+  var barWidth = 120;
+  var width = (barWidth + 10) * data.length;
+  var height = 200;
 
-  var ul = document.createElement('ul');
-  popupDiv.appendChild(ul);
+  var x = d3.scaleLinear().domain([0, data.length]).range([0, width]);
+  var y = d3.scaleLinear().domain([0, d3.max(data, function(datum) { return datum.freq; })]).
+            rangeRound([0, height]);
 
-  for (var i = 0, ie = data.length; i < ie; ++i) {
-    var a = document.createElement('a');
-    a.href = makeLegit(data[i]);
-    a.appendChild(document.createTextNode(data[i]));
+  var display = d3.select("#most_visited_sites").
+                   append("svg:svg").
+                   attr("width", width).
+                   attr("height", height + 50);
 
-    var li = document.createElement('li');
-    li.appendChild(a);
+  display.selectAll("rect").
+     data(data).
+     enter().
+     append("svg:rect").
+     attr("x", function(datum, index) { return x(index); }).
+     attr("y", function(datum) { return height - y(datum.freq); }).
+     attr("height", function(datum) { return y(datum.freq); }).
+     attr("width", barWidth).
+     attr("fill", "#2d578b");
 
-    ul.appendChild(li);
-  }
+  display.selectAll("text").
+    data(data).
+    enter().
+    append("svg:text").
+    attr("x", function(datum, index) { return x(index) + barWidth; }).
+    attr("y", function(datum) { return height - y(datum.freq); }).
+    attr("dx", -barWidth/2).
+    attr("dy", "1.2em").
+    attr("text-anchor", "middle").
+    text(function(datum) { return datum.freq;}).
+    attr("fill", "black");
+
+  display.selectAll("text.yAxis").
+    data(data).
+    enter().append("svg:text").
+    attr("x", function(datum, index) { return x(index) + barWidth; }).
+    attr("y", height).
+    attr("dx", -barWidth/2).
+    attr("text-anchor", "middle").
+    attr("style", "font-size: 12; font-family: Helvetica, sans-serif").
+    text(function(datum) { return datum.url;}).
+    attr("transform", "translate(0, 18)").
+    attr("class", "yAxis").
+    attr("fill", "black");
 }
 
 // Search history to find up to ten links that a user has typed in,
@@ -54,7 +86,8 @@ function buildTypedUrlList(divName) {
 
   chrome.history.search({
       'text': '',              // Return every history item....
-      'startTime': oneWeekAgo  // that was accessed less than one week ago.
+      'startTime': oneWeekAgo, // that was accessed less than one week ago.
+      'maxResults': 10000
     },
     function(historyItems) {
       // For each history item, get details on all visits.
@@ -75,12 +108,12 @@ function buildTypedUrlList(divName) {
       }
     });
 
-var filterUrl = function(urlFilter) {
-    if (typeof urlFilter !== 'undefined') {
-        var urlParts = urlFilter.split('/', 4);
-        return urlParts[2];
-    }
-};
+  var filterUrl = function(urlFilter) {
+      if (typeof urlFilter !== 'undefined') {
+          var urlParts = urlFilter.split('/', 4);
+          return urlParts[2];
+      }
+  };
 
 
   // Maps URLs to a count of the number of times the user typed that URL into
@@ -113,18 +146,17 @@ var filterUrl = function(urlFilter) {
   // This function is called when we have the final list of URls to display.
   var onAllVisitsProcessed = function() {
     // Get the top scorring urls.
-    urlArray = [];
+    urlFreq = [];
     for (var url in urlToCount) {
-      urlArray.push(url);
+      urlFreq.push(
+          {
+              url: url,
+              freq: urlToCount[url]
+          }
+      );
     }
 
-    // Sort the URLs by the number of times the user typed them.
-    urlArray.sort(function(a, b) {
-      return urlToCount[b] - urlToCount[a];
-    });
-
-//    buildPopupDom(divName, urlArray.slice(0, 10));
-    buildPopupDom(divName, urlArray);
+    buildPopupDom(divName, urlFreq);
   };
 }
 
