@@ -3,11 +3,10 @@
   "version": "1.0",
   "description": "Displays most visited pages on your 'New Tab' page",
   "permissions": [
-    "history",
-    "tabs"
+    "history"
   ],
   "browser_action": {
-    "default_popup": "history.html",
+    "default_popup": "sushi.html",
     "default_icon": "sushi2.png"
   },
   "chrome_url_overrides": {
