@@ -1,6 +1,17 @@
 // Copyright (c) 2012 The Chromium Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
+function formatUrl(d) {
+  var name = d.name;
+  var url = "http://" + name;
+  if(!(name.includes(".io")
+    || name.includes(".edu")
+    || name.includes(".org")
+    || name.includes(".gov"))) {
+      url = url + ".com";
+  }
+  return url;
+}
 
 function buildChart(divname, data) {
   var color = d3.scale.category20b();
@@ -9,7 +20,7 @@ function buildChart(divname, data) {
   svg.attr("height", window.innerHeight);
 
   var bubble = d3.layout.pack()
-    .size([window.innerWidth, window.innerHeight])
+    .size([window.innerWidth - 20, window.innerHeight - 20])
     .padding(10) // padding between adjacent circles
     .value(function(d) {return d.value;}); // new data will be loaded to bubble layout
 
@@ -20,23 +31,18 @@ function buildChart(divname, data) {
     .data(nodes, function(d) { return d.name; })
     .enter();
  
-  vis.append('circle')
+  vis.append('a')
+    .attr("xlink:href", function(d) { return formatUrl(d); })
+    .append('circle')
     .attr('transform', function(d) { return 'translate(' + d.x + ',' + d.y + ')'; })
     .attr('r', function(d) { return d.r; })
     .style("fill", function(d) { return color(d.value); });
 
   vis.append("text")
-    .attr({
-      "text-anchor": "middle",
-      "font-size": function(d) {
-        return d.value / ((d.value * 9) / 100);
-      },
-
-      "dy": function(d) {
-        return d.r / ((d.r * 25) / 100);
-      }
-    })
+    .attr("text-anchor", "middle")
+    .attr("dy", ".35em")
     .attr('transform', function(d) { return 'translate(' + d.x + ',' + d.y + ')'; })
+    .style("fill", "black")
     .text(function(d){ return d.name; });
 }
 
